@@ -1,0 +1,42 @@
+Thoughts:
+
+Features:
+--NLP on reviews
+----Split positive, negative, and neutral reviews
+--NLP on bottling / taste
+----TF-IDF scores for most common terms: e.g., "peaty"
+
+Similarity scores:
+--Calculate pairwise distance for any two whiskies. Cache this.
+----Should NLP features be included?
+--Figure out weights for each feature
+
+
+Use cases:
+--User enters a whiskey. Find similar, highly rated whiskies
+---Cache list of similar whiskies for each possible entry for speedy retrieval
+---Cache should be relatively large to accommodate filtering
+--Same as above with multiple entries
+
+--User enters a description, cocktail, etc.
+----Look for occurrences in review / bottling / taste text
+----Pull similar whiskies to this occurrence
+
+
+Cocktail list:
+--Whiskey sour
+--John Collins (cocktail)
+--Sazerac
+--Rusty Nail (cocktail)
+--Old Fashioned
+--Mint julep
+--Manhattan (cocktail)
+--Irish coffee
+
+Duplicating reviews:
+--For cases with only a few reviews
+--Stop when length > a certain amount
+
+
+Filter results:
+--According to style, region, type, price, etc.
