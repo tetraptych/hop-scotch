@@ -146,7 +146,6 @@ def scrape_distillery_page(url, session = dryscrape.Session() ):
         if tries == 4:
             session.reset()
 
-    session.reset()
     print '\tURL visited!'
     soup = BeautifulSoup(response, 'lxml')
     print '\t\tSoup\'s up!'
@@ -164,57 +163,20 @@ def scrape_distillery_page(url, session = dryscrape.Session() ):
     return links5
 
 
-
-
-'''
-def scrape_brand_page(url, session = dryscrape.Session() ):
-    url = url + '?page=1&sort=rating&direction=desc
-    url = url + '?itemsforsale[]=1&votes[]=1&sort=undefined&direction=undefined&highlight=none'
-    response = None
-    tries = 0
-    print '\t' + url
-
-    while (response == '' or response is None):
-        print '\tAttempt number: {}...'.format(tries)
-        sleep(max(5*tries, 20))
-        session.visit(url)
-        # session.body()
-        response = session.body()
-        tries += 1
-        if tries == 4:
-            session.reset()
-
-    session.reset()
-    print '\tURL visited!'
-    soup = BeautifulSoup(response, 'lxml')
-    print '\t\tSoup\'s up!'
-    links = soup.find_all('a')
-
-    links2 = [link.attrs for link in links]
-    links3 = []
-    for link in links2:
-        if 'href' in link:
-            links3.append(link['href'])
-
-    links4 = filter(lambda link: '.com/whisky/' in link, links3)
-    links5 = list(np.unique(links4))
-
-    return links5
-'''
-
-def scrape_all_whiskey_urls(session, actual_distillery_urls, actual_whiskey_urls, visited):
+def scrape_all_whiskey_urls(session, actual_distillery_urls, actual_whiskey_urls_part2, actually_visited):
     # session = dryscrape.Session()
 
     for page_num, dist_url in enumerate(actual_distillery_urls):
-        if dist_url not in visited:
+        if dist_url not in actually_visited:
             print 'Scraping page number {}...'.format(page_num+1)
             res = scrape_distillery_page(dist_url, session)
-            actual_whiskey_urls = actual_whiskey_urls + res
-            visited.append(dist_url)
+            actual_whiskey_urls_part2 = actual_whiskey_urls_part2 + res
+            actually_visited.append(dist_url)
 
-            if page_num % 10 == 0:
-                pickle_object(actual_whiskey_urls, 'whiskeybase_actual_whiskey_urls')
-                pickle_object(visited, 'whiskeybase_visited_urls')
+            if page_num % 5 == 0:
+                pickle_object(actual_whiskey_urls_part2, 'whiskeybase_actual_whiskey_urls_part2')
+                pickle_object(actually_visited, 'whiskeybase_actually_visited_urls')
+                session.reset()
 
                 print 'ALWAYS SAVE YOUR WORK, SOMETIMES'
                 print 'SOMETIMES SAVE YOUR WORK, ALWAYS'
@@ -222,7 +184,7 @@ def scrape_all_whiskey_urls(session, actual_distillery_urls, actual_whiskey_urls
     # with open('whiskeybase_whiskey_urls.pkl') as f:
     #     whiskey_urls = pickle.load(f)
 
-    return actual_whiskey_urls, visited
+    return actual_whiskey_urls, actually_visited
 
 
 def scrape_one_whiskey_page(url):
@@ -263,11 +225,15 @@ def soups_up(df, whiskey_urls):
     return df
 
 
+
+
+
 if __name__ == '__main__':
     visited = []
     whiskey_urls = []
 
     session = dryscrape.Session()
+
 
     with open('whiskeybase_actual_distillery_urls.pkl') as f:
         actual_distillery_urls = pickle.load(f)
@@ -278,4 +244,17 @@ if __name__ == '__main__':
     with open('whiskeybase_visited_urls.pkl') as f:
         visited = pickle.load(f)
 
-    # scrape_all_whiskey_urls(session, actual_distillery_urls, actual_whiskey_urls, visited)
+    with open('whiskeybase_actual_whiskey_urls_part2.pkl') as f:
+        actual_whiskey_urls_part2 = pickle.load(f)
+
+    with open('whiskeybase_actually_visited_urls.pkl') as f:
+        actually_visited = pickle.load(f)
+
+    remaining_to_visit = list(set(visited) - set(actually_visited))
+
+    first_run = False
+    if first_run:
+        actual_whiskey_urls_part2 = []
+        actually_visited = [ 'https://www.whiskybase.com/distillery/85/bunnahabhain','https://www.whiskybase.com/distillery/82/springbank','https://www.whiskybase.com/distillery/75/mortlach','https://www.whiskybase.com/distillery/101/glendronach','https://www.whiskybase.com/distillery/76/glenrothes','https://www.whiskybase.com/distillery/115/tobermory','https://www.whiskybase.com/distillery/52/ben-nevis','https://www.whiskybase.com/distillery/229/buffalo-trace-distillery','https://www.whiskybase.com/distillery/125/longmorn','https://www.whiskybase.com/distillery/109/glen-grant','https://www.whiskybase.com/distillery/113/edradour','https://www.whiskybase.com/distillery/48/aberlour','https://www.whiskybase.com/distillery/51/auchentoshan' ]
+
+    scrape_all_whiskey_urls(session, actual_distillery_urls, actual_whiskey_urls_part2, actually_visited)

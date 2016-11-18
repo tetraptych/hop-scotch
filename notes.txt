@@ -22,6 +22,9 @@ Use cases:
 ----Look for occurrences in review / bottling / taste text
 ----Pull similar whiskies to this occurrence
 
+--User enters their profile
+---see recommendations based on existing ratings
+---ex https://www.whiskybase.com/profile/johan-van-samang/lists/ratings
 
 Cocktail list:
 --Whiskey sour
@@ -40,3 +43,12 @@ Duplicating reviews:
 
 Filter results:
 --According to style, region, type, price, etc.
+
+
+
+QUESTIONS FOR DAN:
+--Should I exclude things that haven't been rated much (and users who haven't rated many things?)
+--How to judge effectiveness of regularization parameters?
+--factorization_recommender or ranking_factorization_recommender???
+--side data results in HIGHER training errors?!?!?!?!
+--other ways to include side data (NLP? etc.)

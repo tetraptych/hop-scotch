@@ -5,7 +5,7 @@ import pandas as pd
 import re
 import unidecode
 from collections import Counter
-from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
 from string import punctuation
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
@@ -138,8 +138,8 @@ if __name__ == '__main__':
 
     articles = (rdf['combined_text']).values
 
-    vectorizer, vectors = vectorize(articles, ngram_range = (1,1), max_df = 0.25, min_df = 10, max_features = 500)
-    num_topics = 13
+    vectorizer, vectors = vectorize(articles, ngram_range = (1,1), max_df = 0.1, min_df = 250, max_features = 400)
+    num_topics = 8
 
     Y = pdist(vectors.todense(),'cosine')
     dist_mat = squareform(Y)
