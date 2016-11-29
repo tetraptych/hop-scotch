@@ -17,7 +17,7 @@ app, model, rdf, W, similarity_matrix = create_app()
 # Home page
 @app.route('/')
 def homepage():
-    return 'Welcome to Scotch/Hop! <br><a href="/recommend">Click here to get some recommendations.</a>'
+    return 'Welcome to Hop/Scotch! <br><a href="/recommend">Click here to get some recommendations.</a>'
 
 @app.route('/recommend')
 def search_page():
