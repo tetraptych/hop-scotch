@@ -1,29 +1,26 @@
 from flask import Flask, request, render_template, url_for
 from flask_bootstrap import Bootstrap
-from helper import *
 import recommend as rec
 
 
 def create_app():
   app = Flask(__name__)
-
   Bootstrap(app)
-
   model = rec.get_model()
   rdf   = rec.get_rdf()
+  W, similarity_matrix = rec.get_similarity_matrix()
 
-  return app, model, rdf
+  return app, model, rdf, W, similarity_matrix
 
-app, model, rdf = create_app()
-
+app, model, rdf, W, similarity_matrix = create_app()
 
 # Home page
 @app.route('/')
-def index():
-    return "hello"
+def homepage():
+    return 'Welcome to Scotch/Hop! <br><a href="/recommend">Click here to get some recommendations.</a>'
 
-@app.route('/dashboard')
-def dashboard():
+@app.route('/recommend')
+def search_page():
     rendered_template = render_template('index.html')
     return rendered_template
 
@@ -57,29 +54,23 @@ def results():
             item_list, score_list = rec.profile_input(first)
 
     # pred_url_list = predict(url_list)
-    guess = rec.recommend(model, item_list, score_list)
-    results = rec.filter_results(guess, rdf, type_, minprice, maxprice)
+    guess = rec.recommend(model, item_list, score_list, rdf = rdf, similarity_matrix = similarity_matrix )
+    results = rec.filter_results(guess, rdf, type_, minprice, maxprice, num_to_show = 20)
     # res = []
     # for whisk in guess:
     #     res.append('https://www.whiskybase.com/whisky/{}'.format(whisk))
 
-    cols_needed_for_display = ['id', 'url', 'category', 'brand', 'name', 'price', 'photo_url']
-    results2 = results[cols_needed_for_display]
+    cols_needed_for_display = ['id', 'url', 'category', 'brand', 'name', 'price', 'photo_url', 'null_photo_url', 'brand_and_name']
 
-    rec_list = results2.T.to_dict().values()
+    # results2 = results[results['null_photo_url'] == 0]
+    # results3= results2[cols_needed_for_display]
+    results3 = results[cols_needed_for_display]
 
-
-    # return rec_list.__repr__()
+    rec_list = results3.T.to_dict().values()
 
     return render_template('results.html', items = rec_list)
 
-    # return results['item_id'].values.__repr__()
-
-    # albums_list = list()
-    # for album_url, art_id in zip(pred_url_list, art_id_list):
-    #     albums_list.append({'album_url': album_url, 'art_id': art_id})
-    # return render_template('results.html', items = albums_list)
 
 
 if __name__ == '__main__':
-  app.run(host = "0.0.0.0", port = int("8000"), debug = True)
+    app.run(host = "0.0.0.0", port = int("8000"), debug = True)

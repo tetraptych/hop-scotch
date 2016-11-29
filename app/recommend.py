@@ -16,30 +16,48 @@ from sklearn.decomposition import PCA
 from mpl_toolkits.mplot3d import Axes3D
 from sklearn.manifold import TSNE
 import graphlab
-
-
-# with open('whiskey_data.pkl') as f:
-#     rdf = pickle.load(f)
+from scipy.spatial.distance import pdist, squareform
 
 
 def get_rdf():
-    with open('../whiskey_data.pkl') as f:
+    '''
+    Loads the DataFrame with item and rating information. Used by app.py to filter recommendations.
+    '''
+    with open('../data/whiskey_data_final.pkl') as f:
         rdf = pickle.load(f)
+
     return rdf
 
 
 def get_model():
+    '''
+    Loads the GraphLab Ranking Factorization Recommender model.
+    '''
     model = graphlab.load_model('model')
     return model
 
+def get_similarity_matrix():
+    '''
+    Loads the LDA topic decomposition and returns both the loaded matrix and the derived matrix of similarity scores.
+    '''
+    W = np.load('topic_decomposition.npy')
+    Y = pdist(W,'cosine')
+    similarity_matrix = 1.0 - squareform(Y)
+    return W, similarity_matrix
 
 
 def isfloat(value):
-      try:
-          float(value)
-          return True
-      except ValueError:
-          return False
+    '''
+    INPUT: str
+    OUTPUT: bool
+
+    Determines if the value can be cast as a float. If so, returns True. Otherwise, returns False.
+    '''
+    try:
+      float(value)
+      return True
+    except ValueError:
+      return False
 
 
 def random_word(length, source = string.lowercase):
@@ -116,13 +134,17 @@ def profile_input(user_name):
 
 
 def get_item_id_from_url(item_link):
+    '''
+    INPUT: link to a whiskey page
+    OUTPUT: item ID (integer) of the whiskey with that URL
+    '''
     res = re.search('\d+', item_link)
     if res is not None:
         res = int(res.group(0))
     return res
 
 
-def recommend(model, item_list, score_list = None, filter_terms = None, cuttoff_size = 4):
+def recommend(model, item_list, score_list = None, cutoff_size = 4, rdf = None, similarity_matrix = None ):
     '''
     INPUT: list of items, list of scores, size at which to use model directly instead of similarity scores
     OUTPUT: list of item IDs matching the filter terms sorted according to predicted rating
@@ -130,18 +152,20 @@ def recommend(model, item_list, score_list = None, filter_terms = None, cuttoff_
     if score_list is None or score_list == []:
         score_list = list(100*np.ones(len(item_list)))
 
+
+    model_weight = float(len(item_list)) / cutoff_size
     # Modality 1: too few ratings, use similarity
-    if len(item_list) < cuttoff_size:
-        recs = recommend_on_similarity(model, item_list, score_list)
+    if len(item_list) < cutoff_size:
+        recs = recommend_on_similarity(model, item_list, score_list, rdf = rdf, similarity_matrix = similarity_matrix, model_weight = model_weight)
 
     # Modality 2: enough ratings to use model directly
-    if len(item_list) >= cuttoff_size:
+    if len(item_list) >= cutoff_size:
         recs = recommend_from_model(model, item_list, score_list)
 
     return recs
 
 
-def filter_results(recommendations, rdf, type_ = 'any', minprice = 0, maxprice = 100000, percentile_min = 50, num_to_show = 50):
+def filter_results(recommendations, rdf, type_ = 'any', minprice = 0, maxprice = 100000, percentile_min = 25, num_to_show = 30):
     '''
     INPUT: DataFrame or SFrame containing item IDs, dictionary of search specifications
     OUTPUT: DataFrame containing item IDs matching the specifications
@@ -155,8 +179,8 @@ def filter_results(recommendations, rdf, type_ = 'any', minprice = 0, maxprice =
 
     full_recommendations = pd.merge(left = recommendations, right = rdf, how = 'inner', left_on='item_id', right_on = 'id')
 
-    relevant_cols = ['item_id', 'id', 'url', 'category', 'price', 'district', 'scotch_bool', 'united_states_bool', 'canada_bool', 'japan_bool', 'ireland_bool', 'single_malt_bool', 'blend_bool', 'brand', 'name', 'photo_url']
-    # cols_needed_for_display = ['id', 'url', 'category', 'brand', 'name', 'price', 'photo_url']
+    relevant_cols = full_recommendations.columns
+    # ['item_id', 'id', 'url', 'category', 'price', 'district', 'scotch_bool', 'united_states_bool', 'canada_bool', 'japan_bool', 'ireland_bool', 'single_malt_bool', 'blend_bool', 'brand', 'name', 'photo_url']
 
     full_recommendations = full_recommendations[relevant_cols]
 
@@ -170,16 +194,16 @@ def filter_results(recommendations, rdf, type_ = 'any', minprice = 0, maxprice =
             col = 'united_states_bool'
         elif type_ == 'ireland':
             col = 'ireland_bool'
-        elif type_ == 'canada':
+        elif type_ == 'canadian':
             col = 'canada_bool'
-        elif type_ == 'japan':
+        elif type_ == 'japanese':
             col = 'japan_bool'
         filtered_recs = filtered_recs[filtered_recs[col] == 1]
 
     return filtered_recs[:num_to_show]
 
 
-def recommend_on_similarity(model, item_list, score_list = None):
+def recommend_on_similarity(model, item_list, score_list = None, rdf = None, similarity_matrix = None, model_weight = 0.5):
     '''
     INPUT: list of rated items, list of ratings, number of items to return
     OUTPUT: list of recommendations in sorted order
@@ -187,12 +211,14 @@ def recommend_on_similarity(model, item_list, score_list = None):
     Finds items similar to the ones in the given list (weighted according to the input ratings).
     Returns the items that best match the given ones, noting that scores of 50 or below result in negative contributions to the overall score.
 
+    If a similarity matrix is given, also uses cosine similarity in the topic space (discovered by LDA) to find similar items. The balance between the model and the LDA topics is governed by the model_weight parameter.
+
     This method is most useful when there are only a handful of rated items, preventing the model from giving recommendations directly. Otherwise, use the recommend function instead.
     '''
     if score_list is None or score_list == []:
         score_list = list(100*np.ones(len(item_list)))
 
-    weights = [int(score) - 50 for score in score_list]
+    weights = [float(score) - 50 for score in score_list]
     total_weight = sum(weights)
 
     weights = [ float(w) / total_weight for w in weights]
@@ -211,8 +237,33 @@ def recommend_on_similarity(model, item_list, score_list = None):
     out_df['item_id'] = out_df['item_id'].astype(int)
     out_df['score']   = out_df['score'].astype(float)
 
-    #### filter out to ensure results match search specs
-    # recommendations = filter_results(out_df)
+    ## Rescale so that score is between 0 and 1:
+    min_score = np.min(out_df['score'])
+    max_score = np.max(out_df['score'])
+    out_df['score'] = (out_df['score'] - min_score) / (max_score - min_score)
+
+    if similarity_matrix is not None:
+
+        weights = np.matrix([float(score) - 50 for score in score_list])
+        total_weight = np.sum(weights)
+        weights = weights / total_weight
+
+        indexes = list(rdf[rdf['id'].isin(item_list)].index)
+        weighted_scores = np.dot(weights,similarity_matrix[indexes])
+        df = pd.DataFrame(weighted_scores.T, columns = ['score']).sort_values('score', ascending = False)
+        df.reset_index(inplace = True)
+        df['item_id'] = df['index'].map(lambda x: rdf['id'].loc[x])
+        df = df[~(df['item_id'].isin(item_list))]
+        min_score = np.min(df['score'])
+        max_score = np.max(df['score'])
+        df['score'] = (df['score'] - min_score) / (max_score - min_score)
+
+        mdf = pd.merge(left = df, right = out_df, how = 'left', on = 'item_id', suffixes = ('_lda', '_model'))
+        mdf['score'] = model_weight * mdf['score_model'] + (1.0-model_weight)*mdf['score_lda']
+        mdf = mdf[['item_id', 'score']]
+        mdf = mdf.sort_values('score', ascending = False)
+        out_df = mdf
+
     return out_df
 
 
@@ -285,7 +336,14 @@ def generate_dissimilarity_scores(model, item_list, score_list):
     return Wdf['mean_similarity']
 
 
-def visualization(pca_components = 3, tsne = False):
+def visualization(pca_components = 6, tsne = False):
+    '''
+    INPUT: list of item IDs and associated scores
+    OUTPUT: sorted DataFrame of item IDs, similarity scores
+
+    Finds the mean factor vector for the given item IDs then returns all items sorted by the similarity to this mean vector.
+    '''
+
     W = model.coefficients['item_id']
     num_factors = model.num_factors
 
@@ -308,9 +366,21 @@ def visualization(pca_components = 3, tsne = False):
         ax.scatter(X_red[:,0], X_red[:,1], X_red[:,2] )
 
     if tsne:
-        sne = TSNE(n_iter = 1000, verbose = 1, metric = 'euclidean')
-        small_X = X_red[:1000]
+        sne = TSNE(n_components = 2, n_iter = 1000, init = 'pca', verbose = 1, metric = 'correlation')
+        small_X = X_red
         tsned_X = sne.fit_transform(small_X)
 
-        plt.scatter(tsned_X[:,0], tsned_X[:,1], alpha = 0.4)
+        cm = plt.cm.get_cmap('prism')
+
+        # rdf['price_color'] = rdf['price'].apply(lambda row: np.max([int(row)/30, 75]) )
+        rdf['type_color']  = rdf.apply(lambda row: row['scotch_bool'] + 2*row['united_states_bool'] + 3*row['canada_bool'], axis = 1)
+        plt.scatter(tsned_X[:,0], tsned_X[:,1], alpha = 0.9, c = rdf['type_color'], s = rdf['price']/30 + 20)
+        plt.scatter(tsned_X[:,0], tsned_X[:,1], alpha = 0.3)
+
+
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+
+        ax.scatter(tsned_X2[:,0], tsned_X2[:,1],tsned_X2[:,2], alpha = 0.1)
+
         # s, c
