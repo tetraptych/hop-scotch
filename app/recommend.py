@@ -151,7 +151,8 @@ def recommend(model, item_list, score_list = None, cutoff_size = 4, rdf = None, 
     '''
     if score_list is None or score_list == []:
         score_list = list(100*np.ones(len(item_list)))
-
+        if len(score_list) != len(item_list):
+            score_list = list(100*np.ones(len(item_list)))
 
     model_weight = float(len(item_list)) / cutoff_size
     # Modality 1: too few ratings, use similarity
@@ -334,53 +335,3 @@ def generate_dissimilarity_scores(model, item_list, score_list):
     Wdf.sort_values(by = 'mean_similarity', inplace = True, ascending = False)
 
     return Wdf['mean_similarity']
-
-
-def visualization(pca_components = 6, tsne = False):
-    '''
-    INPUT: list of item IDs and associated scores
-    OUTPUT: sorted DataFrame of item IDs, similarity scores
-
-    Finds the mean factor vector for the given item IDs then returns all items sorted by the similarity to this mean vector.
-    '''
-
-    W = model.coefficients['item_id']
-    num_factors = model.num_factors
-
-    Wdf = W.to_dataframe()
-    Wdf.set_index('item_id', inplace = True)
-
-    df = pd.DataFrame()
-    for i in xrange(num_factors):
-        df[str(i)] = Wdf['factors'].apply(lambda x: x[i])
-
-    X = df.values
-
-    pca = PCA(n_components = pca_components)
-    X_red = pca.fit_transform(X)
-
-    if not tsne:
-        fig = plt.figure()
-        ax = fig.add_subplot(111, projection='3d')
-
-        ax.scatter(X_red[:,0], X_red[:,1], X_red[:,2] )
-
-    if tsne:
-        sne = TSNE(n_components = 2, n_iter = 1000, init = 'pca', verbose = 1, metric = 'correlation')
-        small_X = X_red
-        tsned_X = sne.fit_transform(small_X)
-
-        cm = plt.cm.get_cmap('prism')
-
-        # rdf['price_color'] = rdf['price'].apply(lambda row: np.max([int(row)/30, 75]) )
-        rdf['type_color']  = rdf.apply(lambda row: row['scotch_bool'] + 2*row['united_states_bool'] + 3*row['canada_bool'], axis = 1)
-        plt.scatter(tsned_X[:,0], tsned_X[:,1], alpha = 0.9, c = rdf['type_color'], s = rdf['price']/30 + 20)
-        plt.scatter(tsned_X[:,0], tsned_X[:,1], alpha = 0.3)
-
-
-        fig = plt.figure()
-        ax = fig.add_subplot(111, projection='3d')
-
-        ax.scatter(tsned_X2[:,0], tsned_X2[:,1],tsned_X2[:,2], alpha = 0.1)
-
-        # s, c

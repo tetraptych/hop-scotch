@@ -23,7 +23,7 @@ import string
 from sklearn.decomposition import NMF
 from sklearn.decomposition import LatentDirichletAllocation
 from scipy.spatial.distance import pdist, squareform
-
+from sklearn.cross_validation import train_test_split
 
 def isfloat(value):
     '''
@@ -301,9 +301,41 @@ def load_data():
 
     best_params['observation_data'] = sf
     best_params['max_iterations'] = 225
-    model = graphlab.recommender.factorization_recommender.create(**best_params)
+    model = graphlab.recommender.ranking_factorization_recommender.create(**best_params)
 
     return rdf, ratings, item_info, model
+
+
+def test_naive_model(rdf, ratings):
+    '''
+    INPUT: rdf, ratings df
+    OUTPUT: Three RMSEs (tuple)
+
+    Splits data into train and test sets, then evaluates the RMSE on the training set for three separate strategies: (1) guess the mean item score; (2) guess the mean user score; (3) guess the mean of these two means.
+    '''
+    train_set, test_set = train_test_split(ratings, train_size = 0.8)
+    train_one = train_set.copy()
+    train_two = train_set.copy()
+
+    average_rating_per_item = train_one.groupby('item_id').mean()
+    average_rating_per_item.reset_index(inplace = True)
+    average_rating_per_item.rename(index = str, columns = {'score':'average_item_score'}, inplace = True)
+    test_set = pd.merge(left = test_set, right = average_rating_per_item, on='item_id', how = 'inner')
+
+    average_rating_per_user = train_two.groupby('user_name').mean()
+    average_rating_per_user.reset_index(inplace = True)
+    average_rating_per_user = average_rating_per_user[['user_name','score']]
+    average_rating_per_user.rename(index = str, columns = {'score':'average_user_score'}, inplace = True)
+    test_set = pd.merge(left = test_set, right = average_rating_per_user, on='user_name', how = 'inner')
+
+    RMSE_guess_item_mean = np.sqrt(  np.mean((test_set['score'] - test_set['average_item_score'] )**2)  )
+    RMSE_guess_user_mean = np.sqrt(  np.mean((test_set['score'] - test_set['average_user_score'] )**2)  )
+    RMSE_guess_both_mean = np.sqrt(  np.mean((test_set['score'] - (test_set['average_user_score']+test_set['average_item_score'] )/2 )**2)  )
+
+
+    return RMSE_guess_item_mean, RMSE_guess_user_mean, RMSE_guess_both_mean
+
+
 
 
 def get_item_name_from_url(item_link):

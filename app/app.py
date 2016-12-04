@@ -62,9 +62,9 @@ def results():
 
     cols_needed_for_display = ['id', 'url', 'category', 'brand', 'name', 'price', 'photo_url', 'null_photo_url', 'brand_and_name']
 
-    # results2 = results[results['null_photo_url'] == 0]
-    # results3= results2[cols_needed_for_display]
-    results3 = results[cols_needed_for_display]
+    results2 = results[results['null_photo_url'] == 0]
+    results3= results2[cols_needed_for_display]
+    # results3 = results[cols_needed_for_display]
 
     rec_list = results3.T.to_dict().values()
 
