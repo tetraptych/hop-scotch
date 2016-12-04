@@ -5,6 +5,4 @@ flask_bootstrap
 numpy
 pandas
 scipy
-dryscrape
-webkit_server
 virtualenv
