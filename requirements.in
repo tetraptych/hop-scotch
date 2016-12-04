@@ -5,5 +5,5 @@ flask_bootstrap
 numpy
 pandas
 scipy
-cPickle
 dryscrape
+virtualenv
