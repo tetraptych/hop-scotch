@@ -6,4 +6,5 @@ numpy
 pandas
 scipy
 dryscrape
+webkit_server
 virtualenv
