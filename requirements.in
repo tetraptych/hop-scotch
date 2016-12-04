@@ -2,3 +2,5 @@ flask
 gunicorn
 pip-tools
 flask_bootstrap
+numpy
+pandas
