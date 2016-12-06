@@ -10,6 +10,8 @@ install_string = 'https://get.graphlab.com/GraphLab-Create/2.1/{}/{}/GraphLab-Cr
 
 pip.main(['install', install_string])
 import graphlab
+import recommend as rec
+
 
 def create_app():
   app = Flask(__name__)
@@ -22,7 +24,6 @@ def create_app():
 
 app, model, rdf, W, similarity_matrix = create_app()
 
-import recommend as rec
 
 # Home page
 @app.route('/')
