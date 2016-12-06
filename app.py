@@ -1,7 +1,14 @@
 from flask import Flask, request, render_template, url_for
 from flask_bootstrap import Bootstrap
-import recommend as rec
+import pip
 
+GL_KEY   = os.environ['GL_KEY']
+GL_EMAIL = os.environ['GL_EMAIL']
+
+install_string = 'https://get.graphlab.com/GraphLab-Create/2.1/{}/{}/GraphLab-Create-License.tar.gz'.format(GL_EMAIL, GL_KEY)
+
+pip.main(['install', install_string])
+import graphlab
 
 def create_app():
   app = Flask(__name__)
@@ -13,6 +20,8 @@ def create_app():
   return app, model, rdf, W, similarity_matrix
 
 app, model, rdf, W, similarity_matrix = create_app()
+
+import recommend as rec
 
 # Home page
 @app.route('/')
