@@ -5,4 +5,5 @@ flask_bootstrap
 numpy
 pandas
 scipy
+graphlab-create
 virtualenv
