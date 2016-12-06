@@ -6,4 +6,5 @@ numpy
 pandas
 scipy
 graphlab-create
+unidecode
 virtualenv
