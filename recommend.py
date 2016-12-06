@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-from scipy import sparse
 import graphlab
 import numbers
 import decimal
@@ -9,13 +8,6 @@ import re
 import unidecode
 import itertools
 import random, string
-import dryscrape
-from bs4 import BeautifulSoup
-from sklearn.preprocessing import StandardScaler
-from sklearn.decomposition import PCA
-from mpl_toolkits.mplot3d import Axes3D
-from sklearn.manifold import TSNE
-import graphlab
 from scipy.spatial.distance import pdist, squareform
 
 
@@ -71,67 +63,67 @@ def random_word(length, source = string.lowercase):
     return ''.join(random.choice(source) for i in range(length))
 
 
-def profile_input(user_name):
-    '''
-    INPUT: WhiskeyBase user name OR profile URL
-    OUTPUT: item list, score list of actual ratings
-
-    Scrapes the given profile for ratings data and returns items, scores in list format.
-    '''
-    session = dryscrape.Session()
-
-    # Convert the user name to an acceptable format to be used in a URL...
-    # OR detect that a URL was passed as input and do nothing.
-    user_name = user_name.lower().strip()
-
-    if ' ' in user_name:
-        user_name = user_name.replace(' ', '-')
-    if '/profile/' in user_name:
-        url = user_name
-        if '/lists/ratings' not in url:
-            if url[-1] != '/':
-                url = url + '/lists/ratings'
-            else:
-                url = url + 'lists/ratings'
-    else:
-        url = 'https://www.whiskybase.com/profile/{}/lists/ratings'.format(user_name)
-
-    # Visit the URL and extract the information
-    response = None
-
-    while response == '' or response is None:
-        session.visit(url)
-        response = session.body()
-
-    soup = BeautifulSoup(response, 'lxml')
-    body = soup.find('tbody')
-    item_list  = []
-    score_list = []
-
-    if body is not None:
-        rows = body.find_all('tr')
-
-        for row in rows:
-            link = row.find('a')
-
-            if link is not None:
-                if 'href' in link.attrs:
-                    item_link = link['href']
-                    item_list.append(get_item_id_from_url(item_link))
-
-            info_list = row.find_all('td')
-            if info_list is not None:
-                if info_list != []:
-                    rating = info_list[-1]
-                    if rating is not None:
-                        score_list.append(float(rating.text))
-
-    # Reset the session for future use
-    session.reset()
-    del session
-
-    return item_list, score_list
-
+# def profile_input(user_name):
+#     '''
+#     INPUT: WhiskeyBase user name OR profile URL
+#     OUTPUT: item list, score list of actual ratings
+#
+#     Scrapes the given profile for ratings data and returns items, scores in list format.
+#     '''
+#     session = dryscrape.Session()
+#
+#     # Convert the user name to an acceptable format to be used in a URL...
+#     # OR detect that a URL was passed as input and do nothing.
+#     user_name = user_name.lower().strip()
+#
+#     if ' ' in user_name:
+#         user_name = user_name.replace(' ', '-')
+#     if '/profile/' in user_name:
+#         url = user_name
+#         if '/lists/ratings' not in url:
+#             if url[-1] != '/':
+#                 url = url + '/lists/ratings'
+#             else:
+#                 url = url + 'lists/ratings'
+#     else:
+#         url = 'https://www.whiskybase.com/profile/{}/lists/ratings'.format(user_name)
+#
+#     # Visit the URL and extract the information
+#     response = None
+#
+#     while response == '' or response is None:
+#         session.visit(url)
+#         response = session.body()
+#
+#     soup = BeautifulSoup(response, 'lxml')
+#     body = soup.find('tbody')
+#     item_list  = []
+#     score_list = []
+#
+#     if body is not None:
+#         rows = body.find_all('tr')
+#
+#         for row in rows:
+#             link = row.find('a')
+#
+#             if link is not None:
+#                 if 'href' in link.attrs:
+#                     item_link = link['href']
+#                     item_list.append(get_item_id_from_url(item_link))
+#
+#             info_list = row.find_all('td')
+#             if info_list is not None:
+#                 if info_list != []:
+#                     rating = info_list[-1]
+#                     if rating is not None:
+#                         score_list.append(float(rating.text))
+#
+#     # Reset the session for future use
+#     session.reset()
+#     del session
+#
+#     return item_list, score_list
+#
 
 def get_item_id_from_url(item_link):
     '''

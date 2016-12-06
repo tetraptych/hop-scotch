@@ -47,11 +47,11 @@ def results():
     score_list = [int(score) for score in score_list if rec.isfloat(score)]
     item_list = [rec.get_item_id_from_url(url) for url in url_list]
 
-    if len(url_list) > 0:
-        first = url_list[0]
-        if ('www.whiskybase.' not in first) and (not rec.isfloat(first)):
-            # Profile page, scrape to get ratings info
-            item_list, score_list = rec.profile_input(first)
+    # if len(url_list) > 0:
+    #     first = url_list[0]
+    #     if ('www.whiskybase.' not in first) and (not rec.isfloat(first)):
+    #         # Profile page, scrape to get ratings info
+    #         item_list, score_list = rec.profile_input(first)
 
     # pred_url_list = predict(url_list)
     guess = rec.recommend(model, item_list, score_list, rdf = rdf, similarity_matrix = similarity_matrix )
