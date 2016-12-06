@@ -19,7 +19,6 @@ flask-bootstrap==3.3.7.0
 flask==0.11.1
 functools32==3.2.3.post2  # via jsonschema
 genson==0.1.0             # via graphlab-create, psclient
-graphlab-create==2.1
 gunicorn==19.6.0
 itsdangerous==0.24        # via flask
 jinja2==2.8               # via flask
@@ -45,3 +44,4 @@ unidecode==0.4.19
 virtualenv==15.1.0
 visitor==0.1.3            # via flask-bootstrap
 werkzeug==0.11.11         # via flask
+--upgrade --no-cache-dir https://get.graphlab.com/GraphLab-Create/2.1/brianburkelewis@gmail.com/865E-071C-BA77-A102-3DEE-4C4A-8249-F0C1/GraphLab-Create-License.tar.gz
