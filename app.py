@@ -1,6 +1,7 @@
 from flask import Flask, request, render_template, url_for
 from flask_bootstrap import Bootstrap
 import pip
+import os
 
 GL_KEY   = os.environ['GL_KEY']
 GL_EMAIL = os.environ['GL_EMAIL']
