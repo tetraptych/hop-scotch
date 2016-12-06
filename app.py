@@ -5,11 +5,11 @@ import os
 
 GL_KEY   = os.environ['GL_KEY']
 GL_EMAIL = os.environ['GL_EMAIL']
-
 install_string = 'https://get.graphlab.com/GraphLab-Create/2.1/{}/{}/GraphLab-Create-License.tar.gz'.format(GL_EMAIL, GL_KEY)
-
 pip.main(['install', install_string])
+
 import graphlab
+
 import recommend as rec
 
 
