@@ -9,6 +9,7 @@ import itertools
 import random, string
 from scipy.spatial.distance import pdist, squareform
 import os
+import pip
 
 GL_KEY   = os.environ['GL_KEY']
 GL_EMAIL = os.environ['GL_EMAIL']
