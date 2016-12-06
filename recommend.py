@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-import graphlab
 import numbers
 import decimal
 import cPickle as pickle
@@ -9,6 +8,14 @@ import unidecode
 import itertools
 import random, string
 from scipy.spatial.distance import pdist, squareform
+import os
+
+GL_KEY   = os.environ['GL_KEY']
+GL_EMAIL = os.environ['GL_EMAIL']
+install_string = 'https://get.graphlab.com/GraphLab-Create/2.1/{}/{}/GraphLab-Create-License.tar.gz'.format(GL_EMAIL, GL_KEY)
+pip.main(['install', install_string])
+
+import graphlab
 
 
 def get_rdf():
