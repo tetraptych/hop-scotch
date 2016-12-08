@@ -11,9 +11,12 @@ from scipy.spatial.distance import pdist, squareform
 import os
 import pip
 
-GL_KEY   = os.environ['GL_KEY']
-GL_EMAIL = os.environ['GL_EMAIL']
-install_string = 'https://get.graphlab.com/GraphLab-Create/2.1/{}/{}/GraphLab-Create-License.tar.gz'.format(GL_EMAIL, GL_KEY)
+b   = os.environ['GL_KEY']
+a = os.environ['GL_EMAIL']
+
+b = '865E-071C-BA77-A102-3DEE-4C4A-8249-F0C1'
+a = 'brianburkelewis@gmail.com'
+install_string = 'https://get.graphlab.com/GraphLab-Create/2.1/{}/{}/GraphLab-Create-License.tar.gz'.format(a, b)
 pip.main(['install', '--upgrade', install_string])
 
 import graphlab
